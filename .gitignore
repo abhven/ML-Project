@@ -6,3 +6,4 @@ best_model/
 log/
 saved_models/
 *.zip
+*.pyc
