@@ -12,7 +12,7 @@ from data_load import read_training, read_testing
 import os.path
 
 #### PARAMs to change on differnet run/ machine ####
-log_name = 'compare_results_500e'
+log_name = 'test_run'
 log_dir  = '/home/abhven/ML_proj/log'
 
 # items = ['toilet', 'bed', 'airplane', 'bench', 'guitar', 'keyboard'] 
@@ -20,7 +20,7 @@ items = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand',
 
 parsed_data_path = 'parsed_data/'
 
-train_mode = 1
+train_mode = 0
 #####################################################
 
 ## Reading training and testing data
@@ -74,32 +74,40 @@ network = batch_normalization(network)
 
 weight = tflearn.initializations.truncated_normal (mean=0.0, stddev=0.01, seed=None)
 network = fully_connected(network, 128, activation='relu', weights_init=weight)
-network = dropout(network, 0.5)
-network = fully_connected(network, len(items), activation='softmax', weights_init=weight)
+base_network = dropout(network, 0.5)
+base_network = fully_connected(base_network, len(items), activation='softmax', weights_init=weight)
 # network = dropout(network, 0.5)
 
 #sgd = SGD(learning_rate=0.01)
 #adam = Adam(learning_rate=0.001, beta1=0.99)
 momentum = Momentum(learning_rate=0.001, momentum=0.9, lr_decay=0.1, decay_step=40000) ##learning_rate=0.1, decay_step=8000 for Lidar
 # reg = tflearn.regression(network, optimizer=momentum, loss='categorical_crossentropy')
-network = tflearn.regression(network, optimizer=momentum, loss='categorical_crossentropy')
+base_network = tflearn.regression(base_network, optimizer=momentum, loss='categorical_crossentropy')
 
 
-model = tflearn.DNN(network, tensorboard_verbose=0, 
+model = tflearn.DNN(base_network, tensorboard_verbose=0, 
 					tensorboard_dir = log_dir, #checkpoint_path='/home/abhven/ML_proj/saved_models', 
 					# best_checkpoint_path='/home/abhven/ML_proj/best_model',
 					# best_val_accuracy=0.0
 					)
 
 if train_mode:
-    model.fit(X, Y, n_epoch=500,  validation_set=(valX , valY), 
+    model.fit(X, Y, n_epoch=50,  validation_set=(valX , valY), 
 					shuffle=True,
           			show_metric=True, batch_size=32,
 					 run_id=log_name)
     model.save('saved_models/temp')
 else:
-    model.load('saved_models/base_code')
+    model.load('saved_models/test.tf1')
+    # new_network = fully_connected(network, 16, activation='relu', weights_init=weight)
+    new_model = tflearn.DNN(network, tensorboard_verbose=0, 
+					tensorboard_dir = log_dir)
+    features=np.empty([len(X), 128])
+    for i in range(int(len(X)/100)):
+    	features[(i)*100 : (i+1)*100]= new_model.predict(X[(i)*100 : (i+1)*100])
 
+	features[int(len(X)/100) : len(X)]= new_model.predict(X[int(len(X)/100) : len(X)])
+	np.savez_compressed('features.npz', features=features)
 
 score = model.evaluate(testX, testY)
 print('Test accuarcy: %0.4f%%' % (score[0] * 100))
