@@ -20,6 +20,7 @@ items = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand',
 
 parsed_data_path = 'parsed_data/'
 
+train_mode = 1
 #####################################################
 
 ## Reading training and testing data
@@ -90,10 +91,15 @@ model = tflearn.DNN(network, tensorboard_verbose=0,
 					# best_val_accuracy=0.0
 					)
 
-model.fit(X, Y, n_epoch=500,  validation_set=(valX , valY), 
+if train_mode:
+    model.fit(X, Y, n_epoch=500,  validation_set=(valX , valY), 
 					shuffle=True,
           			show_metric=True, batch_size=32,
 					 run_id=log_name)
+    model.save('saved_models/temp')
+else:
+    model.load('saved_models/base_code')
+
 
 score = model.evaluate(testX, testY)
 print('Test accuarcy: %0.4f%%' % (score[0] * 100))

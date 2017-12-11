@@ -3,7 +3,7 @@
 *.index
 author_code/
 best_model/
-log/
 saved_models/
+log/
 *.zip
 *.pyc
