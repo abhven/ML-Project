@@ -12,10 +12,11 @@ from data_load import read_training, read_testing
 import os.path
 
 #### PARAMs to change on differnet run/ machine ####
-log_name = 'test_save'
+log_name = 'compare_results_500e'
 log_dir  = '/home/abhven/ML_proj/log'
 
-items = ['toilet', 'bed', 'airplane', 'bench', 'guitar', 'keyboard'] 
+# items = ['toilet', 'bed', 'airplane', 'bench', 'guitar', 'keyboard'] 
+items = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand', 'sofa', 'table', 'toilet'] 
 
 parsed_data_path = 'parsed_data/'
 
@@ -35,7 +36,7 @@ if os.path.isfile(train_file):
 	print('** Loaded training data from preloaded files **')
 else:
 	[X, Y, valX, valY ] = read_training(items)
-	np.savez_compressed(train_file , X=X, Y=Y, valX=valX, valY=valX)
+	np.savez_compressed(train_file , X=X, Y=Y, valX=valX, valY=valY)
 	print('** Parsing training data and saving to disk **')
 
 if os.path.isfile(test_file):
@@ -89,7 +90,7 @@ model = tflearn.DNN(network, tensorboard_verbose=0,
 					# best_val_accuracy=0.0
 					)
 
-model.fit(X, Y, n_epoch=5,  validation_set=(valX , valY), 
+model.fit(X, Y, n_epoch=500,  validation_set=(valX , valY), 
 					shuffle=True,
           			show_metric=True, batch_size=32,
 					 run_id=log_name)
