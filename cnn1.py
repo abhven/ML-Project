@@ -12,7 +12,7 @@ from data_load import read_training, read_testing
 import os.path
 
 #### PARAMs to change on differnet run/ machine ####
-log_name = 'test_run'
+log_name = 'features_train'
 log_dir  = '/home/abhven/ML_proj/log'
 
 # items = ['toilet', 'bed', 'airplane', 'bench', 'guitar', 'keyboard'] 
@@ -92,13 +92,13 @@ model = tflearn.DNN(base_network, tensorboard_verbose=0,
 					)
 
 if train_mode:
-    model.fit(X, Y, n_epoch=50,  validation_set=(valX , valY), 
+    model.fit(X, Y, n_epoch=100,  validation_set=(valX , valY), 
 					shuffle=True,
           			show_metric=True, batch_size=32,
 					 run_id=log_name)
     model.save('saved_models/temp')
 else:
-    model.load('saved_models/test.tf1')
+    model.load('saved_models/features_weights.tf1')
     # new_network = fully_connected(network, 16, activation='relu', weights_init=weight)
     new_model = tflearn.DNN(network, tensorboard_verbose=0, 
 					tensorboard_dir = log_dir)
@@ -106,7 +106,7 @@ else:
     for i in range(int(len(X)/100)):
     	features[(i)*100 : (i+1)*100]= new_model.predict(X[(i)*100 : (i+1)*100])
 
-	features[int(len(X)/100) : len(X)]= new_model.predict(X[int(len(X)/100) : len(X)])
+	features[(int(len(X)/100))*100 : len(X)]= new_model.predict(X[(int(len(X)/100))*100 : len(X)])
 	np.savez_compressed('features.npz', features=features)
 
 score = model.evaluate(testX, testY)
