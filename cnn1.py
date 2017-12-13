@@ -102,12 +102,30 @@ else:
     # new_network = fully_connected(network, 16, activation='relu', weights_init=weight)
     new_model = tflearn.DNN(network, tensorboard_verbose=0, 
 					tensorboard_dir = log_dir)
+    ## Training features
     features=np.empty([len(X), 128])
     for i in range(int(len(X)/100)):
     	features[(i)*100 : (i+1)*100]= new_model.predict(X[(i)*100 : (i+1)*100])
 
 	features[(int(len(X)/100))*100 : len(X)]= new_model.predict(X[(int(len(X)/100))*100 : len(X)])
-	np.savez_compressed('features.npz', features=features)
+	np.savez_compressed('train_features.npz', features=features)
+
+	## Validation Features
+	val_features=np.empty([len(valX), 128])
+    for i in range(int(len(valX)/100)):
+    	val_features[(i)*100 : (i+1)*100]= new_model.predict(valX[(i)*100 : (i+1)*100])
+
+	val_features[(int(len(valX)/100))*100 : len(valX)]= new_model.predict(valX[(int(len(valX)/100))*100 : len(valX)])
+	np.savez_compressed('val_features.npz', features=val_features)
+
+	## Validation Features
+	test_features=np.empty([len(testX), 128])
+    for i in range(int(len(testX)/100)):
+    	test_features[(i)*100 : (i+1)*100]= new_model.predict(testX[(i)*100 : (i+1)*100])
+
+	test_features[(int(len(testX)/100))*100 : len(testX)]= new_model.predict(testX[(int(len(testX)/100))*100 : len(testX)])
+	np.savez_compressed('test_features.npz', features=test_features)
+
 
 score = model.evaluate(testX, testY)
 print('Test accuarcy: %0.4f%%' % (score[0] * 100))
