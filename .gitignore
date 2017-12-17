@@ -5,5 +5,7 @@ author_code/
 best_model/
 saved_models/
 log/
+occgrid/
+junk/
 *.zip
 *.pyc
