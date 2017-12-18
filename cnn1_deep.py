@@ -10,6 +10,46 @@ import numpy as np
 from tflearn.layers.normalization import batch_normalization
 from data_load import read_training, read_testing
 import os.path
+# from svm2 import plot_confusion_matrix
+import itertools
+import matplotlib
+# matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
+
+def plot_confusion_matrix(cm, classes,
+                          normalize=False,
+                          title='Confusion matrix',
+                          cmap=plt.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized Confusion Matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.title(title, size=20)
+    plt.colorbar()
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45, size=20)
+    plt.yticks(tick_marks, classes, size=20)
+
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black", size=20)
+
+    plt.tight_layout()
+    plt.ylabel('True label', size=20)
+    plt.xlabel('Predicted label', size=20)
 
 #### PARAMs to change on differnet run/ machine ####
 log_name = 'deep_train'
@@ -22,24 +62,25 @@ items = ['bathtub', 'bed', 'chair', 'desk', 'dresser', 'monitor', 'night_stand',
 parsed_data_path = 'parsed_data/'
 
 train_mode = 0
+plot_mode = 1
 #####################################################
 
 ## Reading training and testing data
 train_file = parsed_data_path +'train.npz'
 test_file  = parsed_data_path +'test.npz'
 
-
-if os.path.isfile(train_file):
-	data = np.load(train_file)
-	X = data['X']
-	Y = data['Y']
-	valX = data['valX']
-	valY = data['valY']
-	print('** Loaded training data from preloaded files **')
-else:
-	[X, Y, valX, valY ] = read_training(items)
-	np.savez_compressed(train_file , X=X, Y=Y, valX=valX, valY=valY)
-	print('** Parsing training data and saving to disk **')
+if not plot_mode:
+	if os.path.isfile(train_file):
+		data = np.load(train_file)
+		X = data['X']
+		Y = data['Y']
+		valX = data['valX']
+		valY = data['valY']
+		print('** Loaded training data from preloaded files **')
+	else:
+		[X, Y, valX, valY ] = read_training(items)
+		np.savez_compressed(train_file , X=X, Y=Y, valX=valX, valY=valY)
+		print('** Parsing training data and saving to disk **')
 
 if os.path.isfile(test_file):
 	data = np.load(test_file)
@@ -102,34 +143,63 @@ if train_mode:
 					 run_id=log_name)
     model.save(model_file)
 else:
-    model.load(model_file)
-    # new_network = fully_connected(network, 16, activation='relu', weights_init=weight)
-    new_model = tflearn.DNN(network, tensorboard_verbose=0, 
-					tensorboard_dir = log_dir)
-    ## Training features
-    features=np.empty([len(X), 128])
-    for i in range(int(len(X)/100)):
-    	features[(i)*100 : (i+1)*100]= new_model.predict(X[(i)*100 : (i+1)*100])
+	model.load(model_file)
+	# new_network = fully_connected(network, 16, activation='relu', weights_init=weight)
+	if not plot_mode:
+	    new_model = tflearn.DNN(network, tensorboard_verbose=0, 
+						tensorboard_dir = log_dir)
+	    ## Training features
+	    features=np.empty([len(X), 128])
+	    for i in range(int(len(X)/100)):
+	    	features[(i)*100 : (i+1)*100]= new_model.predict(X[(i)*100 : (i+1)*100])
 
-	features[(int(len(X)/100))*100 : len(X)]= new_model.predict(X[(int(len(X)/100))*100 : len(X)])
-	np.savez_compressed('deep_train_features.npz', features=features)
+		features[(int(len(X)/100))*100 : len(X)]= new_model.predict(X[(int(len(X)/100))*100 : len(X)])
+		np.savez_compressed('deep_train_features.npz', features=features)
 
-	## Validation Features
-	val_features=np.empty([len(valX), 128])
-    for i in range(int(len(valX)/100)):
-    	val_features[(i)*100 : (i+1)*100]= new_model.predict(valX[(i)*100 : (i+1)*100])
+		## Validation Features
+		val_features=np.empty([len(valX), 128])
+	    for i in range(int(len(valX)/100)):
+	    	val_features[(i)*100 : (i+1)*100]= new_model.predict(valX[(i)*100 : (i+1)*100])
 
-	val_features[(int(len(valX)/100))*100 : len(valX)]= new_model.predict(valX[(int(len(valX)/100))*100 : len(valX)])
-	np.savez_compressed('deep_val_features.npz', features=val_features)
+		val_features[(int(len(valX)/100))*100 : len(valX)]= new_model.predict(valX[(int(len(valX)/100))*100 : len(valX)])
+		np.savez_compressed('deep_val_features.npz', features=val_features)
 
-	## Validation Features
-	test_features=np.empty([len(testX), 128])
-    for i in range(int(len(testX)/100)):
-    	test_features[(i)*100 : (i+1)*100]= new_model.predict(testX[(i)*100 : (i+1)*100])
+		## Validation Features
+		test_features=np.empty([len(testX), 128])
+	    for i in range(int(len(testX)/100)):
+	    	test_features[(i)*100 : (i+1)*100]= new_model.predict(testX[(i)*100 : (i+1)*100])
 
-	test_features[(int(len(testX)/100))*100 : len(testX)]= new_model.predict(testX[(int(len(testX)/100))*100 : len(testX)])
-	np.savez_compressed('deep_test_features.npz', features=test_features)
+		test_features[(int(len(testX)/100))*100 : len(testX)]= new_model.predict(testX[(int(len(testX)/100))*100 : len(testX)])
+		np.savez_compressed('deep_test_features.npz', features=test_features)
+
+	else:
+		test_predict=np.empty([len(testX),10])
+		for i in range(int(len(testX)/100)):
+			test_predict[(i)*100 : (i+1)*100]= model.predict(testX[(i)*100 : (i+1)*100])
+
+		test_predict[(int(len(testX)/100))*100 : len(testX)]= model.predict(testX[(int(len(testX)/100))*100 : len(testX)])
+
+		testY = np.argmax(testY, axis=1)
+		predY = np.argmax(test_predict, axis=1)
+		# Compute confusion matrix
+		cnf_matrix = confusion_matrix(testY, predY)
+		np.set_printoptions(precision=2)
+
+		# Plot non-normalized confusion matrix
+		# plt.figure()
+		# plot_confusion_matrix(cnf_matrix, classes=class_names,
+		#                       title='Confusion matrix, without normalization')
+
+		# Plot normalized confusion matrix
+		plt.figure()
+		plot_confusion_matrix(cnf_matrix, classes=items, normalize=True,
+		                      title='Normalized Confusion Matrix')
+
+		plt.show()
 
 
-score = model.evaluate(testX, testY)
-print('Test accuarcy: %0.4f%%' % (score[0] * 100))
+
+
+
+# score = model.evaluate(testX, testY)
+# print('Test accuarcy: %0.4f%%' % (score[0] * 100))
