@@ -1,3 +1,7 @@
+"""
+Authors: Mrunmayee Deshpande, Lu Gan, Bruce Huang, Abhishek Venkataraman 
+
+"""
 import numpy as np
 from itertools import cycle
 from scipy import interp

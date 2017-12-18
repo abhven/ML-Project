@@ -1,3 +1,7 @@
+"""
+Authors: Mrunmayee Deshpande, Lu Gan, Bruce Huang, Abhishek Venkataraman 
+
+"""
 import numpy as np
 import os.path
 

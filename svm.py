@@ -1,3 +1,7 @@
+"""
+Authors: Mrunmayee Deshpande, Lu Gan, Bruce Huang, Abhishek Venkataraman 
+
+"""
 from sklearn import svm
 from sklearn.metrics import accuracy_score, make_scorer
 from sklearn.model_selection import GridSearchCV

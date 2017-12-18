@@ -1,3 +1,7 @@
+"""
+Authors: Mrunmayee Deshpande, Lu Gan, Bruce Huang, Abhishek Venkataraman 
+
+"""
 import timeit
 from skrvm import RVC
 import numpy as np
