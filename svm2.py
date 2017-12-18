@@ -1,6 +1,11 @@
+from itertools import cycle
+from scipy import interp
+from sklearn.metrics import roc_curve, auc
+import scikitplot as skplt
 import itertools
 from sklearn import svm, datasets
 from sklearn.metrics import accuracy_score, make_scorer
+from sklearn.preprocessing import label_binarize
 from sklearn.model_selection import GridSearchCV
 import numpy as np
 
@@ -24,29 +29,29 @@ def plot_confusion_matrix(cm, classes,
     """
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
+        print("Normalized Confusion Matrix")
     else:
         print('Confusion matrix, without normalization')
 
     print(cm)
 
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
+    plt.title(title, size=20)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
+    plt.xticks(tick_marks, classes, rotation=45, size=20)
+    plt.yticks(tick_marks, classes, size=20)
 
     fmt = '.2f' if normalize else 'd'
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
         plt.text(j, i, format(cm[i, j], fmt),
                  horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
+                 color="white" if cm[i, j] > thresh else "black", size=20)
 
     plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+    plt.ylabel('True label', size=20)
+    plt.xlabel('Predicted label', size=20)
 
 
 
@@ -76,11 +81,79 @@ print()
 
 ## Re-fit a nonlinear SVM using the best params
 best_params = clf.best_params_
-best_nonlinear_clf = svm.SVC(kernel='rbf', C=best_params['C'], gamma=best_params['gamma'], verbose=True)
+best_nonlinear_clf = svm.SVC(probability=True, kernel='rbf', C=best_params['C'], gamma=best_params['gamma'], verbose=True)
 print(best_nonlinear_clf)
 best_nonlinear_clf.fit(X, Y)
 print(best_nonlinear_clf.score(testX, testY))
-predY = best_nonlinear_clf.predict(testX)
+#predY = best_nonlinear_clf.predict(testX)
+probY = best_nonlinear_clf.predict_proba(testX)
+
+#skplt.metrics.plot_roc_curve(testY, probY, classes=class_names)
+#plt.show()
+
+
+y_test = label_binarize(testY, classes=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+# Compute ROC curve and ROC area for each class
+n_classes= 10
+lw = 2
+fpr = dict()
+tpr = dict()
+roc_auc = dict()
+for i in range(n_classes):
+    fpr[i], tpr[i], _ = roc_curve(y_test[:, i], probY[:, i])
+    roc_auc[i] = auc(fpr[i], tpr[i])
+
+# Compute micro-average ROC curve and ROC area
+fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), probY.ravel())
+roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+
+
+# Compute macro-average ROC curve and ROC area
+
+# First aggregate all false positive rates
+all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+# Then interpolate all ROC curves at this points
+mean_tpr = np.zeros_like(all_fpr)
+for i in range(n_classes):
+    mean_tpr += interp(all_fpr, fpr[i], tpr[i])
+
+# Finally average it and compute AUC
+mean_tpr /= n_classes
+
+fpr["macro"] = all_fpr
+tpr["macro"] = mean_tpr
+roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+# Plot all ROC curves
+plt.figure()
+plt.plot(fpr["micro"], tpr["micro"],
+         label='micro-average ROC curve (area = {0:0.2f})'
+               ''.format(roc_auc["micro"]),
+         color='deeppink', linestyle=':', linewidth=4)
+
+plt.plot(fpr["macro"], tpr["macro"],
+         label='macro-average ROC curve (area = {0:0.2f})'
+               ''.format(roc_auc["macro"]),
+         color='navy', linestyle=':', linewidth=4)
+
+colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
+for i, color in zip(range(n_classes), colors):
+    plt.plot(fpr[i], tpr[i], color=color, lw=lw,
+             label='ROC curve of {0} (area = {1:0.2f})'
+             ''.format(class_names[i], roc_auc[i]))
+
+plt.plot([0, 1], [0, 1], 'k--', lw=lw)
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate', size=20)
+plt.ylabel('True Positive Rate', size=20)
+plt.title('Multi-class Receiver Operating Characteristic (ROC) Curves', size=20)
+plt.legend(loc="lower right")
+plt.show()
+
+
 
 
 # Compute confusion matrix
@@ -95,7 +168,7 @@ plot_confusion_matrix(cnf_matrix, classes=class_names,
 # Plot normalized confusion matrix
 plt.figure()
 plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
-                      title='Normalized confusion matrix')
+                      title='Normalized Confusion Matrix')
 
 plt.show()
 
