@@ -30,9 +30,7 @@ python cnn_deepNN.py
 
 ## Author's code 
 
-The authors code is avaiable on 
-```
-This is the [link](https://github.com/dimatura/voxnet) to the orginal Voxnet implementation in Theano.
+The authors code is implemented in Theano. This is the [link](https://github.com/dimatura/voxnet) to the orginal Voxnet implementation.
 
 
 
