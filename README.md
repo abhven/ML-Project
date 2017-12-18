@@ -1,5 +1,6 @@
 # ML-Project
 Authors: Mrunmayee Deshpande, Lu Gan, Bruce Huang, Abhishek Venkataraman 
+
 We have implemented 3 models
 ## Basline model
 This is the baseline model re implimented in tensorflow.
