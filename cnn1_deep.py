@@ -181,6 +181,8 @@ else:
 
 		testY = np.argmax(testY, axis=1)
 		predY = np.argmax(test_predict, axis=1)
+
+		np.savez_compressed('labels.npz', testY=testY, predY=predY)
 		# Compute confusion matrix
 		cnf_matrix = confusion_matrix(testY, predY)
 		np.set_printoptions(precision=2)
